@@ -1,1 +1,1 @@
-Repozytorium z Plikami do zadania
+W tej gałęzi sukcesywnie będę dodawał moje pliki
