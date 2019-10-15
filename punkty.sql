@@ -1,8 +1,5 @@
-create table punkty
+CREATE TABLE punkty_geog
 (
-id serial primary key,
-X float Not null,
-Y float not null,
-Z float not null
-);
-
+    id serial Primary key,
+    points geometry(Point) Not null,
+)
