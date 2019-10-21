@@ -15,9 +15,9 @@ namespace Geotronics_AddRandomRecord_Spatial
             NpgsqlConnection conn = new NpgsqlConnection("Server=127.0.0.1;User Id=postgres;" +
                                     "Password=Qetchua08!;Database=Geotronics_Domagala;");
 
-
+            
             conn.Open();
-
+            
             try
             {
 
@@ -27,11 +27,12 @@ namespace Geotronics_AddRandomRecord_Spatial
                     return rands.NextDouble() * (max - min) - min;
                 }
 
-                NpgsqlCommand cmd2 = new NpgsqlCommand("INSERT INTO punkty_geog(points) VALUES ( ST_SetSRID(ST_MakePoint(@X, @Y), 4326))", conn);
+                NpgsqlCommand cmd2 = new NpgsqlCommand("INSERT INTO punkty_geom(geom) VALUES ( ST_SetSRID(ST_MakePoint(@X, @Y, @Z), 4326))", conn);
                 Random rand2 = new Random();
 
                 cmd2.Parameters.AddWithValue("X", (RandomDouble(0.0, 20.0, rand2)));
                 cmd2.Parameters.AddWithValue("Y", (RandomDouble(0.0, 20.0, rand2)));
+                cmd2.Parameters.AddWithValue("Z", (RandomDouble(0.0, 20.0, rand2)));
 
                 cmd2.ExecuteNonQuery();
 
@@ -40,10 +41,11 @@ namespace Geotronics_AddRandomRecord_Spatial
             {
                 Console.WriteLine(ex);
             }
-
+            
+          
             conn.Close();
 
-
+    
 
 
 

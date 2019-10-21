@@ -6,3 +6,6 @@ C:\Users\Michał\source\repos\Geotronics_AddRandomRecord_Spatial\obj\Debug\netco
 C:\Users\Michał\source\repos\Geotronics_AddRandomRecord_Spatial\obj\Debug\netcoreapp2.2\Geotronics_AddRandomRecord_Spatial.csproj.CoreCompileInputs.cache
 C:\Users\Michał\source\repos\Geotronics_AddRandomRecord_Spatial\obj\Debug\netcoreapp2.2\Geotronics_AddRandomRecord_Spatial.AssemblyInfoInputs.cache
 C:\Users\Michał\source\repos\Geotronics_AddRandomRecord_Spatial\obj\Debug\netcoreapp2.2\Geotronics_AddRandomRecord_Spatial.AssemblyInfo.cs
+C:\Users\Michał\source\repos\Geotronics_AddRandomRecord_Spatial\bin\Debug\netcoreapp2.2\Geotronics_AddRandomRecord_Spatial.pdb
+C:\Users\Michał\source\repos\Geotronics_AddRandomRecord_Spatial\obj\Debug\netcoreapp2.2\Geotronics_AddRandomRecord_Spatial.dll
+C:\Users\Michał\source\repos\Geotronics_AddRandomRecord_Spatial\obj\Debug\netcoreapp2.2\Geotronics_AddRandomRecord_Spatial.pdb
