@@ -1,5 +1,5 @@
-CREATE TABLE punkty_geog
+CREATE TABLE punkty_geom
 (
-    id serial Primary key,
-    points geometry(Point) Not null,
-)
+    geom geometry(PointZ) Not null,
+    id serial Primary key
+);
