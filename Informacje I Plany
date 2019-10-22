@@ -1,10 +1,9 @@
-INFORMACJE I PLANY
+					************INFORMACJE I PLANY**************
+					
 
 -- Opis dotychczasowego Działania:
-     
  	- Zapytanie SQL tworzy Tabelę punkty_geom do której można wpisywać punkty o trzech współrzędnych w wariancie geometrycznym
-.
-	- do bazy w PGAdmin4 został dodany plik shp zwierajacy ganice polski    
+	- do bazy w PGAdmin4 został dodany plik shp (Państwo.shp)zwierajacy ganice polski    
  	- program.cs:
 		- Generowanie Współrzenych:
 			- generuje współrzędne X o typie numerycznym int 
@@ -14,34 +13,40 @@ INFORMACJE I PLANY
 			- generuje współrzędne Z o typie numerycznym int
 			  licząc od największej depresjji do najwyższego szczytu w Polsce
 		- Dodawanie do tabeli
-			- Za pomocą zapytania w SQL dodaje punkty okreslone powyższymi współrzędnymi 
-			  (insert into punkty_geom2(geom)SELECT ST_SetSRID(ST_MakePoint(cast(@X as float)/100000, cast(@Y as float)/100000,@Z), 4326))
-			-Jeśli mieszczą się one w granicach Polski określonych przez Państwo.shp
+			- Za pomocą zapytania w SQL dodaje punkty okreslone powyższymi współrzędnymi zamieniajac je na typ float
+			  w tym rozwiązaniu jest to konieczne, ponieważ współrzędne na tej Mapie Polski są zmiennoprzecinkowe.
+			  W przypadku innego pliku nie byłoby to konieczne
+			  (insert into punkty_geom2(geom)
+			  SELECT ST_SetSRID(ST_MakePoint(cast(@X as float)/100000, cast(@Y as float)/100000,@Z), 4326))
+			- Wpisuje je do tabeli punkty_geom2 Jeśli mieszczą się one w granicach Polski określonych przez Państwo.shp
 			  (where (ST_Contains((SELECT ST_SetSRID(geom,4326) FROM \"Państwo\"), 
-                    	  ST_SetSRID(ST_Point((CAST(@X as NUMERIC)/CAST(100000 as NUMERIC)), (CAST(@Y as numeric)/CAST(100000 as NUMERIC))),4326)) = TRUE))
-			- Zapytania CAST służą do uzgodnienia typów miedzy generowanymi zmiennymi a przyjmowanymi przez tabele punkty_geom2
+                    	  ST_SetSRID(ST_Point((CAST(@X as NUMERIC)/CAST(100000 as NUMERIC)), 
+			  (CAST(@Y as numeric)/CAST(100000 as NUMERIC))),4326)) = TRUE))
+			- Zapytania CAST służą do uzgodnienia typów miedzy generowanymi 
+			  zmiennymi a przyjmowanymi przez tabele punkty_geom2
 		
-
-
-
 -- TO DO:
       
 	- znalezienie bazy wojewówdztw - zrobione - należy teraz tylko zaimportować
-      
 	- zwrócenie w konsoli w C# czy punkt znajduje się 
 	  w obrębie województwa za pomocą ST_Within(punkty_geom,województwa)
-      
-	- spawdzenie dystansu za pomocą ST_Distance czy jest mniejszy  niz 30 000m
-      
+      	- spawdzenie dystansu za pomocą ST_Distance czy jest mniejszy niz 30 000m
 	- Ewentualne przypisanie danych geometrycznych do typu geograficznego przez stworzenie tabeli: 
-
-          
+	
 		CREATE TABLE punkty_geog AS
-          
 			SELECT
-            
 				Geography(ST_Transform(geom,4326)) AS geog,
-            
 				id
-        
 			FROM punkty_geom;
+-- Wyjaśnienia:
+
+	- Możliwe jest generwoanie punktów za pomocą zapytania ST_GeneratePoints z pewnością, 
+	  że wygenerowane współrzędne na pewno trafią do tabeli - jednak do wykorzystania go potrzeba
+	  kilku tabel + to zapytanie działa tylko dla punktów 2D 
+	  więc trzeba by traktować je tylko jako generator i forma "przechowania" współrzędnych.
+	  Jest to jednak możliwe i jeśli obecne w projekcie typy, oraz pliki będą lepiej przyswajały to rozwiązanie, możan je wdrożyć
+	- Dla obecnych tutaj rozwiazań korzystam z typu geometrycznego geometry, ponieważ umożliwia on więcej operacji. 
+	  jeśli bedzie to konieczne można ten typ zamienić na typ geography, po wykonaiu wszelkich operaji.
+	- Jesli okazałoby się że plik z granicami państwa lub docelowa Tabela ma inną dokładność, rozszerzenie lub formę zapisu danych
+	  konieczna będzie restrukturyzacja - jednak zasada działania pozostanie taka sama.
+	 
