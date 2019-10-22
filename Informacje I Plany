@@ -5,48 +5,72 @@
  	- Zapytanie SQL tworzy Tabelę punkty_geom do której można wpisywać punkty o trzech współrzędnych w wariancie geometrycznym
 	- do bazy w PGAdmin4 został dodany plik shp (Państwo.shp)zwierajacy ganice polski    
  	- program.cs:
-		- Generowanie Współrzenych:
-			- generuje współrzędne X o typie numerycznym int 
-                  	  licząc od najbardziej wysuniętego na zachód, do najbardziej wysuniętego na wschód punktu Polski
-			- generuje współrzędne Y o typie numerycznym int 
-                	  licząc od najbardziej wysuniętego na południe, do najbardziej wysuniętego na północ punktu Polski
-			- generuje współrzędne Z o typie numerycznym int
-			  licząc od największej depresjji do najwyższego szczytu w Polsce
-		- Dodawanie do tabeli
-			- Za pomocą zapytania w SQL dodaje punkty okreslone powyższymi współrzędnymi zamieniajac je na typ float
-			  w tym rozwiązaniu jest to konieczne, ponieważ współrzędne na tej Mapie Polski są zmiennoprzecinkowe.
-			  W przypadku innego pliku nie byłoby to konieczne
-			  (insert into punkty_geom2(geom)
-			  SELECT ST_SetSRID(ST_MakePoint(cast(@X as float)/100000, cast(@Y as float)/100000,@Z), 4326))
-			- Wpisuje je do tabeli punkty_geom2 Jeśli mieszczą się one w granicach Polski określonych przez Państwo.shp
-			  (where (ST_Contains((SELECT ST_SetSRID(geom,4326) FROM \"Państwo\"), 
-                    	  ST_SetSRID(ST_Point((CAST(@X as NUMERIC)/CAST(100000 as NUMERIC)), 
-			  (CAST(@Y as numeric)/CAST(100000 as NUMERIC))),4326)) = TRUE))
-			- Zapytania CAST służą do uzgodnienia typów miedzy generowanymi 
-			  zmiennymi a przyjmowanymi przez tabele punkty_geom2
+		-Funkcja: Generowanie Punktów i Wpisywanie Do Tabeli:
+			- Generowanie Współrzenych:
+				- generuje współrzędne X o typie numerycznym int 
+				  licząc od najbardziej wysuniętego na zachód, do najbardziej wysuniętego na wschód punktu Polski
+				- generuje współrzędne Y o typie numerycznym int 
+				  licząc od najbardziej wysuniętego na południe, do najbardziej wysuniętego na północ punktu Polski
+				- generuje współrzędne Z o typie numerycznym int
+				  licząc od największej depresjji do najwyższego szczytu w Polsce
+			- Dodawanie do tabeli
+				- Za pomocą zapytania w SQL dodaje punkty okreslone powyższymi współrzędnymi zamieniajac je na typ float
+				  w tym rozwiązaniu jest to konieczne, ponieważ współrzędne na tej Mapie Polski są zmiennoprzecinkowe.
+				  W przypadku innego pliku nie byłoby to konieczne
+				  (insert into punkty_geom2(geom)
+				  SELECT ST_SetSRID(ST_MakePoint(cast(@X as float)/100000, cast(@Y as float)/100000,@Z), 4326))
+				- Wpisuje je do tabeli punkty_geom2 Jeśli mieszczą się one w granicach Polski określonych 
+				  przez Państwo.shp
+				  (where (ST_Contains((SELECT ST_SetSRID(geom,4326) FROM \"Państwo\"), 
+				  ST_SetSRID(ST_Point((CAST(@X as NUMERIC)/CAST(100000 as NUMERIC)), 
+				  (CAST(@Y as numeric)/CAST(100000 as NUMERIC))),4326)) = TRUE))
+				- Zapytania CAST służą do uzgodnienia typów miedzy generowanymi 
+				  zmiennymi a przyjmowanymi przez tabele punkty_geom2
+				  
+		- Funkcja: Sprawdzanie czy punkt jest w granicach województwa
+			- Zapytanie: "SELECT ST_X(punkty_geom2.geom),ST_Y(punkty_geom2.geom) ,\"Województwa\".jpt_nazwa_ as woj 
+			  FROM \"Województwa\" join punkty_geom2 on ST_Within(punkty_geom2.geom, ST_SetSRID(\"Województwa\".geom, 4326)) 
+			  Where \"Województwa\".jpt_nazwa_ = @W"
+				- Zapytnie wybiera punkty które znajdują się w podanym w inpucie Województwie wyświetlajac razem z 
+				  nazwą Województwaoraz współrzędnymi danego punktu. Pozostało dorobić poszczególne ID
+				- Granicw województw wzięte są z Państwowej strony internetowej. Jest to Plik Województwa.shp
+			- Reszta:
+				-Reszta funkcji wczytuje dane z klawaitury dotyczące nazwy województwa bez wielkich liter 
+				 i polskich znaków oraz wyświetla każdy rekord(Współrzędne Punktu) w nowej linijce
+				
+		- Funkcja: Sprawdzanie czy punkt jest w odległosci 30km od innych
+			- Zapytanie: SELECT  punkty_geog3.id as \" point id\", 
+			  (ST_Distance(punkty_geog2.geog, punkty_geog3.geog) <= 30000) as \"Is Within 30 km\" 
+			  FROM punkty_geog2 JOIN punkty_geog3 ON ST_Area(punkty_geog3.geog) <= 0 where punkty_geog2.id = @D 
+			  	- konieczne jest stworzenie bliźniaczej Tabeli(punkty_geog2) z zamianą kolumny 
+				  geom o typie geometrycznym na kolumnę geog o typie geograficznym
+			  	- Wybiera tylko punkty o ID w duplikacie(punkty_geog3) oryginalnej Tablicy(punkty_geog2) 
+				  okreslonym przez użytkownika
+				- Zwraca wartość boolowską porównania ST_Distance oraz ID punktów 
+				  z którym wpisywany punkt jest porównywany
+				- ST_Area(punkty_geog3.geog) <= 0 umożliwia korzystanie z Konstrukcji JOIN typów przestrzennych
+				  gdyż to wyjśnienie jest zawsze prawdziwe
+			  - Reszta:
+				-Reszta funkcji wczytuje dane z klawaitury dotyczące ID punktu oraz wyświetla każdy rekord
+				 (TRUE lub FALSE zależnie czy założenia <= 30000 zostały spełnione) w nowej linijce
+
+				
 		
 -- TO DO:
-      
-	- znalezienie bazy wojewówdztw - zrobione - należy teraz tylko zaimportować
-	- zwrócenie w konsoli w C# czy punkt znajduje się 
-	  w obrębie województwa za pomocą ST_Within(punkty_geom,województwa)
-      	- spawdzenie dystansu za pomocą ST_Distance czy jest mniejszy niz 30 000m
-	- Ewentualne przypisanie danych geometrycznych do typu geograficznego przez stworzenie tabeli: 
+      - Ulepszenie Funkcji 3 żeby sprawdzała jednocześnie czy wszystkie punkty są od Siebie 30km odległe zwracajac 
+      	tylko jedną wartość boolowską
+      - "Uładnienie" pewnych rozwiązań - np CAST w funkcji 3
 	
-		CREATE TABLE punkty_geog AS
-			SELECT
-				Geography(ST_Transform(geom,4326)) AS geog,
-				id
-			FROM punkty_geom;
 -- Wyjaśnienia:
 
 	- Możliwe jest generwoanie punktów za pomocą zapytania ST_GeneratePoints z pewnością, 
 	  że wygenerowane współrzędne na pewno trafią do tabeli - jednak do wykorzystania go potrzeba
-	  kilku tabel + to zapytanie działa tylko dla punktów 2D 
+	  kilku tabel + to zapytanie działa tylko dla punktów 2D,
 	  więc trzeba by traktować je tylko jako generator i forma "przechowania" współrzędnych.
 	  Jest to jednak możliwe i jeśli obecne w projekcie typy, oraz pliki będą lepiej przyswajały to rozwiązanie, możan je wdrożyć
 	- Dla obecnych tutaj rozwiazań korzystam z typu geometrycznego geometry, ponieważ umożliwia on więcej operacji. 
 	  jeśli bedzie to konieczne można ten typ zamienić na typ geography, po wykonaiu wszelkich operaji.
-	- Jesli okazałoby się że plik z granicami państwa lub docelowa Tabela ma inną dokładność, rozszerzenie lub formę zapisu danych
-	  konieczna będzie restrukturyzacja - jednak zasada działania pozostanie taka sama.
-	 
+	- Jesli okazałoby się że plik z granicami Państwa, Województw lub docelowa Tabela ma inną dokładność, rozszerzenie lub formę zapisu danych
+	  konieczna będzie restrukturyzacja - jednak zasada działania pozostanie taka sama i jest ona jak najbardziej możliwa.
+	- Mapa Województw nie dokońca pokrywa się z Mapą Granic Polski, mimo iż sciagniete są z tego sameog źródła.
+	  Dlatego nie wszystkie punkty bedą leżeć w obrębie jakiegoś województwa
