@@ -1,12 +1,14 @@
 					************INFORMACJE I PLANY**************
-					
+			*****************************************************************************
+			
 
 -- Opis dotychczasowego Działania:
- 	- Zapytanie SQL tworzy Tabelę punkty_geom do której można wpisywać punkty o trzech współrzędnych w wariancie geometrycznym
-	  oraz jej bliźniacze tabele w wariantach Geograficznych, koneiczne do obliczenia odległości
-	- do bazy w PGAdmin4 został dodany plik shp (Państwo.shp)zwierajacy ganice polski    
+ 	- Zapytania w SQL tworzą Tabelę punkty_geom do której można wpisywać punkty o trzech współrzędnych w wariancie geometrycznym
+	  oraz jej bliźniacze tabele w wariantach Geograficznych, konieczne do obliczenia odległości
+	- do bazy w PGAdmin4 został dodany plik shp (Państwo.shp) zwierajacy ganice polski  
+	  oraz (Województwa.shp) zawierajacy granice województw   
  	- program.cs:
-		-Funkcja: Generowanie Punktów i Wpisywanie Do Tabeli:
+		-Funkcja AddRandomSpatialPoints(conn) : Generowanie Punktów i Wpisywanie Do Tabeli:
 			- Generowanie Współrzenych:
 				- generuje współrzędne X o typie numerycznym int 
 				  licząc od najbardziej wysuniętego na zachód, do najbardziej wysuniętego na wschód punktu Polski
@@ -28,7 +30,7 @@
 				- Zapytania CAST służą do uzgodnienia typów miedzy generowanymi 
 				  zmiennymi a przyjmowanymi przez tabele punkty_geom2
 				  
-		- Funkcja: Sprawdzanie czy punkt jest w granicach województwa
+		- Funkcja IsWithinWojewodztwo(conn) : Sprawdzanie czy punkt jest w granicach województwa
 			- Zapytanie: "SELECT ST_X(punkty_geom2.geom),ST_Y(punkty_geom2.geom) ,\"Województwa\".jpt_nazwa_ as woj 
 			  FROM \"Województwa\" join punkty_geom2 on ST_Within(punkty_geom2.geom, ST_SetSRID(\"Województwa\".geom, 4326)) 
 			  Where \"Województwa\".jpt_nazwa_ = @W"
@@ -39,7 +41,7 @@
 				-Reszta funkcji wczytuje dane z klawaitury dotyczące nazwy województwa bez wielkich liter 
 				 i polskich znaków oraz wyświetla każdy rekord(Współrzędne Punktu) w nowej linijce
 				
-		- Funkcja: Sprawdzanie czy punkt jest w odległosci 30km od innych
+		- Funkcja Is30kmFrom(conn) : Sprawdzanie czy punkt jest w odległosci 30km od innych
 			- Zapytanie: SELECT  punkty_geog3.id as \" point id\", 
 			  (ST_Distance(punkty_geog2.geog, punkty_geog3.geog) <= 30000) as \"Is Within 30 km\" 
 			  FROM punkty_geog2 JOIN punkty_geog3 ON ST_Area(punkty_geog3.geog) <= 0 where punkty_geog2.id = @D 
@@ -55,7 +57,7 @@
 				-Reszta funkcji wczytuje dane z klawaitury dotyczące ID punktu oraz wyświetla każdy rekord
 				 (TRUE lub FALSE zależnie czy założenia <= 30000 zostały spełnione) w nowej linijce
 				 
-		- Funkcja: Sprawdzanie czy każdy punkt jest odległy od każdego o 30km
+		- Funkcja Console.WriteLine(IsAll30kmFrom(conn)): Sprawdzanie czy każdy punkt jest odległy od każdego o 30km
 			- Zapytanie 1: SELECT  punkty_geog3.id as \" point id\", (ST_Distance(punkty_geog2.geog, punkty_geog3.geog) 
 			  <= 30000) as \"Is Within 30 km\" FROM punkty_geog2 JOIN punkty_geog3 ON ST_Area(punkty_geog3.geog) <= 0 
 			  where punkty_geog2.id = @D 
@@ -65,19 +67,22 @@
 			- Reszta:
 				- Pętla  iteruje po wierszach tabeli zwróconej przez zapytanie 1. Jeśli w tabeli pojawi się wartość False
 				  Algorytm wychodzi z Pętli i funkcja zwraca False
-
+		- Funkcja Create_geog_Tables(conn) : Tworzenie Tabel Geograficznych punkty_geog oraz punkty_geog2, 
+		  przez przepsianie wartosci z punkty_geom i transformacje 
+		- Funkcja Delete_records_from_table(conn) : Usuwanie Tabel Geograficznych
+		- Funkcja Drop_geog_tables(conn) : Usuwanie Rekordów z wybranej tabeli
 				
 		
 -- TO DO:
-      - "Uładnienie" pewnych rozwiązań - np CAST w funkcji 1, lub ustalenie typów boolowskich oraz ładniejsze wypisywanie Danych
+      -Niekonieczne: "Uładnienie" pewnych rozwiązań - np CAST w funkcji 1, lub ustalenie typów boolowskich oraz ładniejsze wypisywanie Danych
 	
 -- Wyjaśnienia:
 
 	- Możliwe jest generwoanie punktów za pomocą zapytania ST_GeneratePoints z pewnością, 
 	  że wygenerowane współrzędne na pewno trafią do tabeli - jednak do wykorzystania go potrzeba
-	  kilku tabel + to zapytanie działa tylko dla punktów 2D,
+	  kilku tabel oraz to zapytanie działa tylko dla punktów 2D,
 	  więc trzeba by traktować je tylko jako generator i forma "przechowania" współrzędnych.
-	  Jest to jednak możliwe i jeśli obecne w projekcie typy, oraz pliki będą lepiej przyswajały to rozwiązanie, możan je wdrożyć
+	  Jest to jednak możliwe i jeśli obecne w projekcie typy, oraz pliki będą lepiej przyswajały to rozwiązanie, można je wdrożyć
 	- Dla obecnych tutaj rozwiazań korzystam z typu geometrycznego geometry, ponieważ umożliwia on więcej operacji. 
 	  jeśli bedzie to konieczne można ten typ zamienić na typ geography, po wykonaiu wszelkich operaji.
 	- Jesli okazałoby się że plik z granicami Państwa, Województw lub docelowa Tabela ma inną dokładność, 
@@ -89,3 +94,4 @@
 	  interpretacje.
 	- Całość Projektu na pewno jest do wykonania za pomocą wtyczek GeoJSON czy Open GeoSuite, co umożliwiłoby bespośrodnią
 	  modyfikację Typów przestrzennych w C#. Uznałem jednak że to rozwiązanie będzie najlepsze
+	- Dodałem na samym końcu 3 funkcje pomocnicze do usuwania,tworzenia oraz czyszczenia Tablic
