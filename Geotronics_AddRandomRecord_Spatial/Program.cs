@@ -14,10 +14,14 @@ namespace Geotronics_AddRandomRecord_Spatial
                                     "Password=Qetchua08!;Database=Geotronics_Domagala;");
 
             conn.Open();
-            //Is30kmFrom(conn);
-            // Console.WriteLine(IsAll30kmFrom2(conn));
-            // IsWithinWojewodztwo(conn);
             // AddRandomSpatialPoints(conn);
+            // IsWithinWojewodztwo(conn);
+            //Create_geog_Tables(conn);
+            //Is30kmFrom(conn);
+            //Console.WriteLine(IsAll30kmFrom(conn));
+            //Delete_records_from_table(conn);
+            //Create_geog_Tables(conn);
+            //Drop_geog_tables(conn);
             conn.Close();
 
         }
@@ -31,7 +35,7 @@ namespace Geotronics_AddRandomRecord_Spatial
              //oraz złożoności.
 
                 //Adding Point SQL command and random
-                var cmd = new NpgsqlCommand("insert into punkty_geom2(geom) " +
+                var cmd = new NpgsqlCommand("insert into punkty_geom(geom) " +
                     "SELECT ST_SetSRID(ST_MakePoint(cast(@X as float)/100000, cast(@Y as float)/100000,@Z), 4326) " +
                     "where (ST_Contains((SELECT ST_SetSRID(geom,4326) FROM \"Państwo\"), " +
                     "ST_SetSRID(ST_Point((CAST(@X as NUMERIC)/CAST(100000 as NUMERIC)), " +
@@ -71,13 +75,13 @@ namespace Geotronics_AddRandomRecord_Spatial
                 Console.WriteLine();
 
             //Querry with already red Wojewodztwo
-                NpgsqlCommand cmd3 = new NpgsqlCommand("SELECT ST_X(punkty_geom2.geom),ST_Y(punkty_geom2.geom) ,\"Województwa\".jpt_nazwa_ as woj " +
-                "FROM \"Województwa\" join punkty_geom2 on ST_Within(punkty_geom2.geom, ST_SetSRID(\"Województwa\".geom, 4326)) " +
+                NpgsqlCommand cmd2 = new NpgsqlCommand("SELECT ST_X(punkty_geom.geom),ST_Y(punkty_geom.geom) ,\"Województwa\".jpt_nazwa_ as woj " +
+                "FROM \"Województwa\" join punkty_geom on ST_Within(punkty_geom.geom, ST_SetSRID(\"Województwa\".geom, 4326)) " +
                 "Where \"Województwa\".jpt_nazwa_ = @W", connection);
-                cmd3.Parameters.AddWithValue("W", d);
+                cmd2.Parameters.AddWithValue("W", d);
 
             //Writing all Points in Selected Wojewodztwo
-                NpgsqlDataReader dr = cmd3.ExecuteReader();
+                NpgsqlDataReader dr = cmd2.ExecuteReader();
                 Console.WriteLine(" X             Y            WOJ    ");
                 while (dr.Read())
                     Console.WriteLine("{0}    {1}    {2}    ", dr[0], dr[1], dr[2]);
@@ -91,12 +95,12 @@ namespace Geotronics_AddRandomRecord_Spatial
                 int x = Int32.Parse(z);
 
             //Zapytanie oraz wczytanie ID
-                NpgsqlCommand cmd5 = new NpgsqlCommand("SELECT  punkty_geog3.id as \" point id\", (ST_Distance(punkty_geog2.geog, punkty_geog3.geog) <= 30000) " +
-                "as \"Is Within 30 km\" FROM punkty_geog2 JOIN punkty_geog3 ON ST_Area(punkty_geog3.geog) <= 0 where punkty_geog2.id = @D ", connection);
-                cmd5.Parameters.AddWithValue("D",x);
+                NpgsqlCommand cmd3 = new NpgsqlCommand("SELECT  punkty_geog2.id as \" point id\", (ST_Distance(punkty_geog.geog, punkty_geog2.geog) <= 30000) " +
+                "as \"Is Within 30 km\" FROM punkty_geog JOIN punkty_geog2 ON ST_Area(punkty_geog2.geog) <= 0 where punkty_geog.id = @D ", connection);
+                cmd3.Parameters.AddWithValue("D",x);
 
             // Wypisanie Punktów
-                NpgsqlDataReader dr = cmd5.ExecuteReader();
+                NpgsqlDataReader dr = cmd3.ExecuteReader();
                 Console.WriteLine("PointId     Is it within 30 km?    ");
                 while (dr.Read())
                     Console.WriteLine("{0}             {1}    ", dr[0], dr[1]);
@@ -106,13 +110,13 @@ namespace Geotronics_AddRandomRecord_Spatial
         static string IsAll30kmFrom(NpgsqlConnection connection/*,int ID*/)
         {
             //licznik punktów
-                var cmd6 = new NpgsqlCommand("Select COUNT(*) FROM punkty_geog2",connection);
+                var cmd4 = new NpgsqlCommand("Select COUNT(*) FROM punkty_geog",connection);
             //Zwracanie Czy dany punkt jest w odl. 30 km od sebie
-                var cmd5 = new NpgsqlCommand("SELECT  punkty_geog3.id as \" point id\", (ST_Distance(punkty_geog2.geog, punkty_geog3.geog) <= 30000)" +
-                " as \"Is Within 30 km\" FROM punkty_geog2 JOIN punkty_geog3 ON ST_Area(punkty_geog3.geog) <= 0 where punkty_geog2.id = @D ", connection);
+                var cmd5 = new NpgsqlCommand("SELECT  punkty_geog2.id as \" point id\", (ST_Distance(punkty_geog.geog, punkty_geog2.geog) <= 30000)" +
+                " as \"Is Within 30 km\" FROM punkty_geog JOIN punkty_geog2 ON ST_Area(punkty_geog2.geog) <= 0 where punkty_geog.id = @D ", connection);
 
             //Odzczytanie Licznika oraz przypisanie go do int i
-                NpgsqlDataReader dr2 = cmd6.ExecuteReader();
+                NpgsqlDataReader dr2 = cmd4.ExecuteReader();
                 dr2.Read();
                 int i = Convert.ToInt32(dr2[0]);
                 dr2.Close();
@@ -139,7 +143,28 @@ namespace Geotronics_AddRandomRecord_Spatial
                 };
                 return true.ToString();
         }
-    }
-
-}
-
+        static void Create_geog_Tables(NpgsqlConnection connection)
+        {
+            //tworzenie dwóch Tabel, gdzie przechowywane będą identyczne wartości jak w przypadku punkty_geom, ale w formacie Geograficznym
+                var cmd6 = new NpgsqlCommand("CREATE TABLE punkty_geog AS SELECT Geography(ST_Transform(geom,4326)) AS geog, id FROM punkty_geom", connection);
+                cmd6.ExecuteNonQuery();
+                var cmd7 = new NpgsqlCommand("CREATE TABLE punkty_geog2 AS SELECT geog AS geog, id FROM punkty_geog", connection);
+                cmd7.ExecuteNonQuery();
+        }
+        static void Drop_geog_tables(NpgsqlConnection connection)
+        {
+            //Usuwanie Tabel Geograficznych
+                var cmd8 = new NpgsqlCommand("DROP TABLE punkty_geog", connection);
+                cmd8.ExecuteNonQuery();
+                var cmd9 = new NpgsqlCommand("DROP TABLE punkty_geog2", connection);
+                cmd9.ExecuteNonQuery();
+        }
+        static void Delete_records_from_table(NpgsqlConnection connection)
+        {
+            //Usuwanie Rekordów z wybranej tabeli
+                Console.WriteLine("Wpisz nazwę Tabeli którą chcesz wyczyścić (punkty_geom,punkty_geog,punkty_geog2)");
+                string x = Console.ReadLine();
+                var cmd10 = new NpgsqlCommand("DELETE FROM @Tabela", connection);
+                cmd10.Parameters.AddWithValue("Tabela", x);
+                cmd10.ExecuteNonQuery();
+        }
