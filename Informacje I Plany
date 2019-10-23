@@ -74,7 +74,9 @@
 				
 		
 -- TO DO:
-      -Niekonieczne: "Uładnienie" pewnych rozwiązań - np CAST w funkcji 1, lub ustalenie typów boolowskich oraz ładniejsze wypisywanie Danych
+      - Modyfikacaj Funkcji 2 by wypisywała wszystkie Województwa z ich punktami jednocześnie
+      - Niekonieczne: "Uładnienie" pewnych rozwiązań - np CAST w funkcji 1, 
+        lub ustalenie typów boolowskich oraz ładniejsze wypisywanie Danych
 	
 -- Wyjaśnienia:
 
