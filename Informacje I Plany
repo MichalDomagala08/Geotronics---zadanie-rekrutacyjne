@@ -3,6 +3,7 @@
 
 -- Opis dotychczasowego Działania:
  	- Zapytanie SQL tworzy Tabelę punkty_geom do której można wpisywać punkty o trzech współrzędnych w wariancie geometrycznym
+	  oraz jej bliźniacze tabele w wariantach Geograficznych, koneiczne do obliczenia odległości
 	- do bazy w PGAdmin4 został dodany plik shp (Państwo.shp)zwierajacy ganice polski    
  	- program.cs:
 		-Funkcja: Generowanie Punktów i Wpisywanie Do Tabeli:
@@ -53,13 +54,22 @@
 			  - Reszta:
 				-Reszta funkcji wczytuje dane z klawaitury dotyczące ID punktu oraz wyświetla każdy rekord
 				 (TRUE lub FALSE zależnie czy założenia <= 30000 zostały spełnione) w nowej linijce
+				 
+		- Funkcja: Sprawdzanie czy każdy punkt jest odległy od każdego o 30km
+			- Zapytanie 1: SELECT  punkty_geog3.id as \" point id\", (ST_Distance(punkty_geog2.geog, punkty_geog3.geog) 
+			  <= 30000) as \"Is Within 30 km\" FROM punkty_geog2 JOIN punkty_geog3 ON ST_Area(punkty_geog3.geog) <= 0 
+			  where punkty_geog2.id = @D 
+			  	- Zapytanie to jest identyczne jak w Funkcji wyżej
+			- Zapytanie 2: Select COUNT(*) FROM punkty_geog2
+				- Zwraca liczbę wierszy w tabeli
+			- Reszta:
+				- Pętla  iteruje po wierszach tabeli zwróconej przez zapytanie 1. Jeśli w tabeli pojawi się wartość False
+				  Algorytm wychodzi z Pętli i funkcja zwraca False
 
 				
 		
 -- TO DO:
-      - Ulepszenie Funkcji 3 żeby sprawdzała jednocześnie czy wszystkie punkty są od Siebie 30km odległe zwracajac 
-      	tylko jedną wartość boolowską
-      - "Uładnienie" pewnych rozwiązań - np CAST w funkcji 3
+      - "Uładnienie" pewnych rozwiązań - np CAST w funkcji 1, lub ustalenie typów boolowskich oraz ładniejsze wypisywanie Danych
 	
 -- Wyjaśnienia:
 
@@ -70,7 +80,12 @@
 	  Jest to jednak możliwe i jeśli obecne w projekcie typy, oraz pliki będą lepiej przyswajały to rozwiązanie, możan je wdrożyć
 	- Dla obecnych tutaj rozwiazań korzystam z typu geometrycznego geometry, ponieważ umożliwia on więcej operacji. 
 	  jeśli bedzie to konieczne można ten typ zamienić na typ geography, po wykonaiu wszelkich operaji.
-	- Jesli okazałoby się że plik z granicami Państwa, Województw lub docelowa Tabela ma inną dokładność, rozszerzenie lub formę zapisu danych
-	  konieczna będzie restrukturyzacja - jednak zasada działania pozostanie taka sama i jest ona jak najbardziej możliwa.
+	- Jesli okazałoby się że plik z granicami Państwa, Województw lub docelowa Tabela ma inną dokładność, 
+	  rozszerzenie lub formę zapisu danych konieczna będzie restrukturyzacja. 
+	  Zasada działania pozostanie jednak taka sama więc zmiana kodu jest jak najbardziej możliwa.
 	- Mapa Województw nie dokońca pokrywa się z Mapą Granic Polski, mimo iż sciagniete są z tego sameog źródła.
 	  Dlatego nie wszystkie punkty bedą leżeć w obrębie jakiegoś województwa
+	- Nie wiedziałem jak interpretować punkt o sprawdzaniu odległosci, więc w Programie napisałem dwie funkcje, spełniające różne
+	  interpretacje.
+	- Całość Projektu na pewno jest do wykonania za pomocą wtyczek GeoJSON czy Open GeoSuite, co umożliwiłoby bespośrodnią
+	  modyfikację Typów przestrzennych w C#. Uznałem jednak że to rozwiązanie będzie najlepsze
