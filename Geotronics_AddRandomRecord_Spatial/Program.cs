@@ -13,12 +13,23 @@ namespace Geotronics_AddRandomRecord_Spatial
             NpgsqlConnection conn = new NpgsqlConnection("Server=127.0.0.1;User Id=postgres;" +
                                     "Password=Qetchua08!;Database=Geotronics_Domagala;");
 
+
+
+            //*********UWAGA!*********
+            //Zanim będzie się korzystać z funkcji sprawdzających odległość trzeba stworzyć za pomocą funkcji
+            //Create_geog_Tables(conn) tabele geometryczne
+            //Jesli funkcja mimo to nie działa trzeba sprawdzić czy w Tabeli punkty_geom są rzeczywiście zapisane jakieś rekordy
+
+
+
+
+
+
             conn.Open();
-            // AddRandomSpatialPoints(conn);
-            // IsWithinWojewodztwo(conn);
-            //Create_geog_Tables(conn);
-            //Is30kmFrom(conn);
-            //Console.WriteLine(IsAll30kmFrom(conn));
+           AddRandomSpatialPoints(conn);
+            isWithinAllWojewodztwas(conn);
+           // Is30kmFrom(conn);
+           // Console.WriteLine(IsAll30kmFrom(conn));
             //Delete_records_from_table(conn);
             //Create_geog_Tables(conn);
             //Drop_geog_tables(conn);
@@ -81,11 +92,18 @@ namespace Geotronics_AddRandomRecord_Spatial
                 cmd2.Parameters.AddWithValue("W", d);
 
             //Writing all Points in Selected Wojewodztwo
-                NpgsqlDataReader dr = cmd2.ExecuteReader();
-                Console.WriteLine(" X             Y            WOJ    ");
-                while (dr.Read())
-                    Console.WriteLine("{0}    {1}    {2}    ", dr[0], dr[1], dr[2]);
+            NpgsqlDataReader dr = cmd2.ExecuteReader();
+            Console.WriteLine("ID:      X             Y            WOJ    ");
+            while (dr.Read())
+                Console.WriteLine("{0}     {1}    {2}    {3}    ", dr[0], dr[1], dr[2], dr[3]);
+
         }
+
+
+
+
+
+
         //Czy Dany punkt jest 30km od wszystkich
         static void Is30kmFrom(NpgsqlConnection connection/*,int ID*/)
         {
@@ -168,3 +186,39 @@ namespace Geotronics_AddRandomRecord_Spatial
                 cmd10.Parameters.AddWithValue("Tabela", x);
                 cmd10.ExecuteNonQuery();
         }
+        static void manually_insert(NpgsqlConnection connection)
+        {
+            //Dodawanie manualne rekordów do Tabel Geograficznych (prawdopodobnie bedzie działało też dla tabeli Geometrycznej
+                Console.WriteLine("Wpisz dziesiętne współrzędne E z dokładnością 5 miejsc po kropce");
+                string x = Console.ReadLine();
+                Console.WriteLine("Wpisz dziesiętne współrzędne N  z dokładnością 5 miejsc po kropce");
+                string y = Console.ReadLine();
+                Console.WriteLine("Wpisz Wysokość w Metrach");
+                string z = Console.ReadLine();
+                Console.WriteLine("Wpisz nazwę Tabeli(punkty_geog,punkty_geog2, punkty_geom)");
+                string w = Console.ReadLine();
+
+                var cmd11 = new NpgsqlCommand("insert into @Tabela VALUES (\'POINTZ(cast(@X as float) cast(@Y as float) @Z)\')", connection);
+                cmd11.Parameters.AddWithValue("Tabela", w);
+                cmd11.Parameters.AddWithValue("X", x);
+                cmd11.Parameters.AddWithValue("Y", y);
+                cmd11.Parameters.AddWithValue("Z", z);
+                cmd11.ExecuteNonQuery();
+        }
+        static void isWithinAllWojewodztwas(NpgsqlConnection connection)
+        {
+            //Zapytanie do wszytskich województw
+                NpgsqlCommand cmd12 = new NpgsqlCommand("SELECT punkty_geom.id, ST_X(punkty_geom.geom),ST_Y(punkty_geom.geom) ,\"Województwa\".jpt_nazwa_ as woj " +
+                 "FROM \"Województwa\" join punkty_geom on ST_Within(punkty_geom.geom, ST_SetSRID(\"Województwa\".geom, 4326)) ORDER BY \"Województwa\".geom", connection);
+
+            //Wypisanie wszystkich województw
+                NpgsqlDataReader dr = cmd12.ExecuteReader();
+                Console.WriteLine("ID:      X             Y            WOJ    ");
+                while (dr.Read())
+                    Console.WriteLine("{0}     {1}    {2}    {3}    ",dr[0], dr[1], dr[2], dr[3]);
+
+        }
+    }
+
+}
+
