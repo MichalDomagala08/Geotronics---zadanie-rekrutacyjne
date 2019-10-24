@@ -74,7 +74,6 @@
 				
 		
 -- TO DO:
-      - Modyfikacaj Funkcji 2 by wypisywała wszystkie Województwa z ich punktami jednocześnie
       - Niekonieczne: "Uładnienie" pewnych rozwiązań - np CAST w funkcji 1, 
         lub ustalenie typów boolowskich oraz ładniejsze wypisywanie Danych
 	
@@ -97,3 +96,5 @@
 	- Całość Projektu na pewno jest do wykonania za pomocą wtyczek GeoJSON czy Open GeoSuite, co umożliwiłoby bespośrodnią
 	  modyfikację Typów przestrzennych w C#. Uznałem jednak że to rozwiązanie będzie najlepsze
 	- Dodałem na samym końcu 3 funkcje pomocnicze do usuwania,tworzenia oraz czyszczenia Tablic
+	- Funkcja wypisująca punkty w Województwach też jest w dwóch wariantach, można teżw łatwy sposób zrobić funkcę, sprawdzającą
+	  w którym konkretnie województwei jest pdoany punkt
