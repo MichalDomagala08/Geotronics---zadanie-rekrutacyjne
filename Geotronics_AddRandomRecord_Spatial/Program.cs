@@ -15,11 +15,12 @@ namespace Geotronics_AddRandomRecord_Spatial
 
 
 
-            //*********UWAGA!*********
-            //Zanim będzie się korzystać z funkcji sprawdzających odległość trzeba stworzyć za pomocą funkcji
-            //Create_geog_Tables(conn) tabele geometryczne
-            //Jesli funkcja mimo to nie działa trzeba sprawdzić czy w Tabeli punkty_geom są rzeczywiście zapisane jakieś rekordy
-
+             //     ************************************************************************************************************************
+            //      *                                          ******UWAGA!******                                                          *
+            //      * Zanim będzie się korzystać z funkcji sprawdzających odległość trzeba stworzyć za pomocą funkcji                      *
+            //      * Create_geog_Tables(conn) tabele geometryczne                                                                         *
+            //      * Jesli funkcja mimo to nie działa trzeba sprawdzić czy w Tabeli punkty_geom są rzeczywiście zapisane jakieś rekordy   *
+            //      ************************************************************************************************************************
 
 
 
@@ -100,6 +101,12 @@ namespace Geotronics_AddRandomRecord_Spatial
         }
 
 
+            //      ************************************************************************************************************************
+            //      *                                          ******UWAGA!******                                                          *
+            //      * Zanim będzie się korzystać z funkcji sprawdzających odległość trzeba stworzyć za pomocą funkcji                      *
+            //      * Create_geog_Tables(conn) tabele geometryczne                                                                         *
+            //      * Jesli funkcja mimo to nie działa trzeba sprawdzić czy w Tabeli punkty_geom są rzeczywiście zapisane jakieś rekordy   *
+            //      ************************************************************************************************************************
 
 
 
