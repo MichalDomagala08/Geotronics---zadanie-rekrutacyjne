@@ -193,23 +193,25 @@ namespace Geotronics_AddRandomRecord_Spatial
                 cmd10.Parameters.AddWithValue("Tabela", x);
                 cmd10.ExecuteNonQuery();
         }
-        static void manually_insert(NpgsqlConnection connection)
+       static void manually_insert(NpgsqlConnection connection)
         {
-            //Dodawanie manualne rekordów do Tabel Geograficznych (prawdopodobnie bedzie działało też dla tabeli Geometrycznej
-                Console.WriteLine("Wpisz dziesiętne współrzędne E z dokładnością 5 miejsc po kropce");
+            //WERSJA DLA GEOM
+            //Dodawanie manualne rekordów 
+                Console.WriteLine("Wpisz dziesiętne współrzędne E jako int");
                 string x = Console.ReadLine();
-                Console.WriteLine("Wpisz dziesiętne współrzędne N  z dokładnością 5 miejsc po kropce");
+                Console.WriteLine("Wpisz dziesiętne współrzędne N jako int");
                 string y = Console.ReadLine();
                 Console.WriteLine("Wpisz Wysokość w Metrach");
                 string z = Console.ReadLine();
-                Console.WriteLine("Wpisz nazwę Tabeli(punkty_geog,punkty_geog2, punkty_geom)");
-                string w = Console.ReadLine();
+                int z1 = Convert.ToInt32(z);
+              //  Console.WriteLine("Wpisz nazwę Tabeli(punkty_geog,punkty_geog2, punkty_geom)");
+              //  string w = Console.ReadLine();
 
-                var cmd11 = new NpgsqlCommand("insert into @Tabela VALUES (\'POINTZ(cast(@X as float) cast(@Y as float) @Z)\')", connection);
-                cmd11.Parameters.AddWithValue("Tabela", w);
-                cmd11.Parameters.AddWithValue("X", x);
-                cmd11.Parameters.AddWithValue("Y", y);
-                cmd11.Parameters.AddWithValue("Z", z);
+                var cmd11 = new NpgsqlCommand("insert into punkty_geom(geom) SELECT ST_SetSRID(ST_MakePoint(cast(@X1 as float)/100000, cast(@Y1 as float)/100000,@Z1),4326)", connection);
+                //cmd11.Parameters.AddWithValue("Tabela", w);
+                cmd11.Parameters.AddWithValue("X1", x);
+                cmd11.Parameters.AddWithValue("Y1", y);
+                cmd11.Parameters.AddWithValue("Z1", z1);
                 cmd11.ExecuteNonQuery();
         }
         static void isWithinAllWojewodztwas(NpgsqlConnection connection)
@@ -224,6 +226,68 @@ namespace Geotronics_AddRandomRecord_Spatial
                 while (dr.Read())
                     Console.WriteLine("{0}     {1}    {2}    {3}    ",dr[0], dr[1], dr[2], dr[3]);
 
+        }
+         static void Insert_Tramlines(NpgsqlConnection connection)
+        {
+          
+            //Dodawanie manualne rekordów do Tabel z Liniami Kolejowymi
+            //Współrzędne Gdańska E: 18.64637 N: 54.35205
+            //Współrzędne Krakowa E: 19.93658 N: 50.06143
+             
+            Console.WriteLine("Wpisz dziesiętne współrzędne przystanku początkowego punktu E");
+            string x1 = Console.ReadLine();
+            Console.WriteLine("Wpisz dziesiętne współrzędne przystanku początkowego punktu N");
+            string y1 = Console.ReadLine();
+            Console.WriteLine("Wpisz Wysokość przystanku początkowego punktu w Metrach");
+            string z1 = Console.ReadLine();
+            Console.WriteLine("Wpisz dziesiętne współrzędne przystanku końcowego punktu E");
+            string x2 = Console.ReadLine();
+            Console.WriteLine("Wpisz dziesiętne współrzędne przystanku końcowego punktu N");
+            string y2 = Console.ReadLine();
+            Console.WriteLine("Wpisz Wysokość przystanku końcowego punktu w Metrach");
+            string z2 = Console.ReadLine();
+
+            int z11 = Convert.ToInt32(z1);
+            int z22 = Convert.ToInt32(z2);   
+
+            var cmd13 = new NpgsqlCommand("insert into linie_geom(geom) SELECT ST_SetSRID(ST_MakeLine(ST_MakePoint(cast(@X1 as float)/100000, cast(@Y1 as float)/100000,@Z1),ST_MakePoint(cast(@X2 as float)/100000, cast(@Y2 as float)/100000,@Z2)), 4326) ", connection);
+            cmd13.Parameters.AddWithValue("X1", x1);
+            cmd13.Parameters.AddWithValue("Y1", y1);
+            cmd13.Parameters.AddWithValue("Z1", z11);
+            cmd13.Parameters.AddWithValue("X2", x2);
+            cmd13.Parameters.AddWithValue("Y2", y2);
+            cmd13.Parameters.AddWithValue("Z2", z22);
+            cmd13.ExecuteNonQuery();
+            
+        }
+        
+        static void Check_Buffer(NpgsqlConnection connection)
+        {
+            //Wypisuje punkty leżące w Buforze 50km z prawej i lewej strony 
+            //(Za pomocą ST_Buffer(geom, długość, typ (tutaj 'endcap=flat join=round' odpowiada własnie prawej i lewej stronie))
+            
+             var cmd14 = new NpgsqlCommand("SELECT punkty_geom.id, ST_X(punkty_geom.geom),ST_Y(punkty_geom.geom), ST_Z(punkty_geom.geom) FROM punkty_geom JOIN linie_geom ON ST_Contains(ST_Buffer(linie_geom.geom, 50000, 'endcap=flat join=round'),punkty_geom.geom) where linie_geom.id=2", connection);
+            NpgsqlDataReader dr = cmd14.ExecuteReader();
+            Console.WriteLine("ID:      X             Y          Z      ");
+
+            while (dr.Read())
+                Console.WriteLine("{0}     {1}    {2}     {3}     ", dr[0], dr[1], dr[2], dr[3]);
+        }
+        static void Triangulation(NpgsqlConnection connection)
+        {
+            //Zapisuje model trójkatny  w formacie TIN z łaczeniem chmury punktów na granicach województwa
+            //WYMAGA SOLIDNEGO DOPRACOWANIA ORAZ ZROZUMIENIA --> na razie model wstępny, w celu zorientowania się w mozliwosciach funkcji
+            
+            var cmd15 = new NpgsqlCommand("insert into model_trojkatny(geom) SELECT ST_DelaunayTriangles(ST_Union(ST_Collect( ARRAY(SELECT punkty_geom.geom)),ST_SetSRID(\"Województwa\".geom, 4326)),0.001,2)FROM punkty_geom join \"Województwa\" on ST_Within(punkty_geom.geom, ST_SetSRID(\"Województwa\".geom, 4326)) Where \"Województwa\".jpt_nazwa_ = 'malopolskie'", connection);
+            cmd15.ExecuteNonQuery();
+            Console.WriteLine("Dodano Model do Tabeli!");
+            Console.ReadLine();
+
+        }
+        static void Generowanie_Powierzchnii(NpgsqlConnection connection)
+        {
+            //Prosty kod rzutujący Poligon województwa na 3D za pomocą ST_Force3D - przy braku współrzędnej z, automatycznie przydziela 0
+            var cmd16 = new NpgsqlCommand("SELECT ST_AsEWKT(ST_Force3D(ST_SetSRID(\"Województwa\".geom,4326))) FROM \"Województwa\" Where \"Województwa\".jpt_nazwa_ = 'malopolskie'", connection);
         }
     }
 
