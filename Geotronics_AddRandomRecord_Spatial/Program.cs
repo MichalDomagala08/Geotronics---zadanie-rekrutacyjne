@@ -298,7 +298,7 @@ namespace Geotronics_AddRandomRecord_Spatial
             //UWAGA!!! w związku z dużą złożonością geometrii (płaska mapa 3d małopolski) -- algorytm nie jest w stanie od razu policzyć Objetosci i wymaga znacznych zasobów czasowych
             //Na Forach internetowych, w celu uniknieciu tego problemu rekomenduje się korzystanie z takich aplikacji jak np. QGIS i robienie tego typu obliczeń osobno  
             //Oblicza różnicę między geometriami 3D wyznaczonymi przez TIN oraz płaska mapą 3D małopolski a następnie oblicza ich objętość
-            var cmd17 = new NpgsqlCommand("Select ST_Volume(ST_3DDifference(model_trojkatny.geom, flat_wojewodztwa.geom)) FROM model_trojkatny join on flat_wojewodztwa.id =1", connection);
+            var cmd17 = new NpgsqlCommand("Select ST_Volume(ST_3DDifference(ST_MakeSolid(model_trojkatny.geom), ST_MakeSolid(flat_wojewodztwa.geom))) FROM model_trojkatny join on flat_wojewodztwa.id =1", connection);
             cmd17.ExecuteNonQuery();
             NpgsqlDataReader dr = cmd17.ExecuteReader();
 
