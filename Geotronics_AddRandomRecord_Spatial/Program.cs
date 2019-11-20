@@ -273,12 +273,13 @@ namespace Geotronics_AddRandomRecord_Spatial
             while (dr.Read())
                 Console.WriteLine("{0}     {1}    {2}     {3}     ", dr[0], dr[1], dr[2], dr[3]);
         }
-        static void Triangulation(NpgsqlConnection connection)
+        s static void Triangulation(NpgsqlConnection connection)
         {
-            //Zapisuje model trójkatny  w formacie TIN z łaczeniem chmury punktów na granicach województwa
-            //WYMAGA SOLIDNEGO DOPRACOWANIA ORAZ ZROZUMIENIA --> na razie model wstępny, w celu zorientowania się w mozliwosciach funkcji
-            
-            var cmd15 = new NpgsqlCommand("insert into model_trojkatny(geom) SELECT ST_DelaunayTriangles(ST_Union(ST_Collect( ARRAY(SELECT punkty_geom.geom)),ST_SetSRID(\"Województwa\".geom, 4326)),0.001,2)FROM punkty_geom join \"Województwa\" on ST_Within(punkty_geom.geom, ST_SetSRID(\"Województwa\".geom, 4326)) Where \"Województwa\".jpt_nazwa_ = 'malopolskie'", connection);
+            //ALgorytm Triangulacji korzystajacy z metody Delaynay'a , zeby osiagnać mape TIN  --> Triangular irregular networks
+            //na podstawie kolekcji punktów w województwie Małopolskim
+            //
+
+            var cmd15 = new NpgsqlCommand("insert into model_trojkatny(geom) SELECT ST_DelaunayTriangles( ST_Collect(punkty_geom.geom) ,0.001,2) FROM punkty_geom join \"Województwa\"on ST_Within(punkty_geom.geom, ST_SetSRID(\"Województwa\".geom, 4326)) Where \"Województwa\".jpt_nazwa_ = 'malopolskie' ", connection);
             cmd15.ExecuteNonQuery();
             Console.WriteLine("Dodano Model do Tabeli!");
             Console.ReadLine();
@@ -287,7 +288,22 @@ namespace Geotronics_AddRandomRecord_Spatial
         static void Generowanie_Powierzchnii(NpgsqlConnection connection)
         {
             //Prosty kod rzutujący Poligon województwa na 3D za pomocą ST_Force3D - przy braku współrzędnej z, automatycznie przydziela 0
-            var cmd16 = new NpgsqlCommand("SELECT ST_AsEWKT(ST_Force3D(ST_SetSRID(\"Województwa\".geom,4326))) FROM \"Województwa\" Where \"Województwa\".jpt_nazwa_ = 'malopolskie'", connection);
+            //Zapisuje również rzutowany poligon w osobnej tabeli: flat_wojewodztwa
+             var cmd16 = new NpgsqlCommand("insert into flat_wojewodztwa(geom) SELECT ST_AsEWKT(ST_Force3D(ST_SetSRID(\"Województwa\".geom,4326))) FROM \"Województwa\" Where \"Województwa\".jpt_nazwa_ = 'malopolskie'", connection);
+            cmd16.ExecuteNonQuery();
+        }
+        
+          static void Volume(NpgsqlConnection connection)
+        {
+            //UWAGA!!! w związku z dużą złożonością geometrii (płaska mapa 3d małopolski) -- algorytm nie jest w stanie od razu policzyć Objetosci i wymaga znacznych zasobów czasowych
+            //Na Forach internetowych, w celu uniknieciu tego problemu rekomenduje się korzystanie z takich aplikacji jak np. QGIS i robienie tego typu obliczeń osobno  
+            //Oblicza różnicę między geometriami 3D wyznaczonymi przez TIN oraz płaska mapą 3D małopolski a następnie oblicza ich objętość
+            var cmd17 = new NpgsqlCommand("Select ST_Volume(ST_3DDifference(model_trojkatny.geom, flat_wojewodztwa.geom)) FROM model_trojkatny join on flat_wojewodztwa.id =1", connection);
+            cmd17.ExecuteNonQuery();
+            NpgsqlDataReader dr = cmd17.ExecuteReader();
+
+            while (dr.Read())
+                Console.WriteLine("Volume Difference: {0}     ", dr[0]);
         }
     }
 
