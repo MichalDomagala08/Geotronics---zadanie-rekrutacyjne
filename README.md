@@ -1,2 +1,1 @@
-W tej gałęzi sukcesywnie będę dodawał moje pliki. Działanie oraz wyjaśnienie elemntów  są obecne w Pliku: Informacje I Plany
-Przesunąłem Wszystkie pliki do Gałęzi Master, ponieważ projekt jest już na ukonczeniu
+Proejkt ten był projektem rekrutacyjnym do Firmy Geotronics. Zadaniem moim było skrozystanie z PostgreSQL z biblioteki przestrzennej w celu rysowania punktów na mapie i obliczaniu odległości od punktów geograficznych po czym wybieranie takich które spełniają warunki. W Pliku TO-DO można znaleźć dokładniejsze informacje co do działania programu 
