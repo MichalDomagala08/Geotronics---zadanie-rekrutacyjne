@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Npgsql" Version="4.1.1" />
+    <PackageReference Include="Npgsql" Version="4.1.13" />
     <PackageReference Include="Npgsql.GeoJSON" Version="1.0.0" />
   </ItemGroup>
 
